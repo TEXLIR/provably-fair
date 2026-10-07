@@ -177,6 +177,9 @@ class Casino {
       }
 
       const nonce = p.nonce;
+      // player-pair-nonce: the nonce restarts at 0 on every rotation, so the
+      // seed pair number (1-based, as the UI shows it) keeps ids unique
+      const betId = `${p.id}-${p.revealed.length + 1}-${nonce}`;
       const result = fair.resultFromSeeds(p.serverSeed, p.clientSeed, nonce);
       const multiplier = result / 100;
       const targetH = Math.round(target * 100);
@@ -197,7 +200,7 @@ class Casino {
       await this.store.incr(K.bets);
       await this.store.incrBy(K.houseNet, -profitSat);
       await this.store.pushCapped(K.feed, JSON.stringify({
-        id: `${p.id}-${nonce}`,
+        id: betId,
         playerName: p.name,
         amountSat,
         target,
@@ -207,7 +210,7 @@ class Casino {
       }), FEED_SIZE);
 
       const bet = {
-        id: `${p.id}-${nonce}`,
+        id: betId,
         playerId: p.id,
         playerName: p.name,
         nonce,

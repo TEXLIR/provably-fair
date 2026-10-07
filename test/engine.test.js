@@ -188,3 +188,12 @@ test('state() never leaks the current server seed', async () => {
   assert.equal(raw.includes(secret), false, 'the unrevealed server seed leaked into the API view');
   assert.ok(ps.serverSeedHash, 'the commitment must be published');
 });
+
+test('bet ids stay unique across seed rotations', async () => {
+  const { casino, player } = await fresh();
+  const first = (await casino.placeBet(player.id, 100 * SAT_PER_BIT, 2)).bet;
+  await casino.rotateSeed(player.id);
+  const second = (await casino.placeBet(player.id, 100 * SAT_PER_BIT, 2)).bet;
+  assert.equal(first.id, `${player.id}-1-0`);
+  assert.equal(second.id, `${player.id}-2-0`);
+});
