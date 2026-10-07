@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Provably Fair Dice — free play</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <div class="banner">PLAY MONEY ONLY — no deposits, no withdrawals, no real funds</div>
+
+  <header>
+    <div class="stat"><span>House bankroll</span><span id="h-bankroll">—</span></div>
+    <div class="stat"><span>Max profit / bet</span><span id="h-maxprofit">—</span></div>
+    <div class="stat"><span>Bets</span><span id="h-bets">—</span></div>
+    <div class="stat"><span>Wagered</span><span id="h-wagered">—</span></div>
+    <div class="stat"><span>Realized RTP</span><span id="h-rtp">—</span></div>
+    <div class="stat"><span>Edge</span><span id="h-edge">—</span></div>
+  </header>
+
+  <main>
+    <!-- ── your account + your seed pair ─────────────────────────────── -->
+    <section class="panel">
+      <h2>Your account</h2>
+      <div class="kv"><span>Balance</span><span id="p-balance">—</span></div>
+      <div class="kv"><span>Bets</span><span id="p-bets">—</span></div>
+      <div class="kv"><span>Net P/L</span><span id="p-net">—</span></div>
+      <div class="kv"><span>Wins</span><span id="p-wins">—</span></div>
+
+      <h2 style="margin-top:16px">Your seed pair</h2>
+      <label>Client seed (you control this)</label>
+      <input type="text" id="p-client" />
+      <label>Committed server seed hash — the house published this BEFORE you bet</label>
+      <div class="mono" id="p-commit">—</div>
+      <div class="kv" style="margin-top:8px"><span>Next nonce</span><span id="p-nonce">—</span></div>
+      <button class="ghost" id="rotate" style="width:100%;margin-top:10px">Reveal seed &amp; start a new pair</button>
+      <div class="note">Rotating publishes the old server seed, so you can verify every bet made with it.</div>
+    </section>
+
+    <!-- ── the game ───────────────────────────────────────────────────── -->
+    <section class="panel">
+      <h2>Place a bet</h2>
+
+      <label>Bet amount (bits)</label>
+      <input type="number" id="amount" value="100" min="1" step="1" />
+      <div class="row" style="margin-top:6px">
+        <button class="ghost" data-amt="0.5">½</button>
+        <button class="ghost" data-amt="2">2×</button>
+        <button class="ghost" data-amt="max">max</button>
+      </div>
+
+      <label>Target multiplier: <b id="target-label">2.00x</b></label>
+      <input type="range" id="target" min="1.01" max="1000" step="0.01" value="2.00" />
+
+      <div class="kv"><span>Win chance</span><span id="winchance">—</span></div>
+      <div class="kv"><span>Payout on win</span><span id="payout">—</span></div>
+      <div class="kv"><span>Max bet at this target</span><span id="maxbet">—</span></div>
+
+      <button class="primary" id="bet" style="margin-top:12px">Bet</button>
+      <div class="err" id="err"></div>
+
+      <div class="result" id="result" style="display:none">
+        <div class="mult" id="res-mult">—</div>
+        <div id="res-detail" class="note"></div>
+      </div>
+    </section>
+
+    <!-- ── live feed + verifier ───────────────────────────────────────── -->
+    <section class="panel">
+      <h2>Live bets</h2>
+      <div class="feed">
+        <table><tbody id="feed"></tbody></table>
+      </div>
+
+      <h2 style="margin-top:16px">Verify a bet</h2>
+      <label>Server seed (revealed)</label>
+      <input type="text" id="v-seed" placeholder="paste the revealed server seed" />
+      <label>Client seed</label>
+      <input type="text" id="v-client" />
+      <div class="row">
+        <div><label>Nonce</label><input type="number" id="v-nonce" value="0" /></div>
+        <div><label>Target</label><input type="number" id="v-target" value="2.00" step="0.01" /></div>
+      </div>
+      <button class="ghost" id="verify" style="width:100%;margin-top:10px">Verify</button>
+      <div id="v-report" style="margin-top:8px"></div>
+
+      <h2 style="margin-top:16px">Revealed seed pairs</h2>
+      <div class="history" id="revealed">none yet — rotate your seed to reveal one</div>
+    </section>
+  </main>
+
+  <script src="/app.js"></script>
+</body>
+</html>
