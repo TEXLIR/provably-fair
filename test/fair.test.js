@@ -124,3 +124,10 @@ test('verifyBet fails when the server seed does not match the commitment', () =>
   });
   assert.equal(report.ok, false);
 });
+
+test('non-canonical seed spellings are rejected, not silently aliased', () => {
+  for (const s of [SERVER_SEED.toUpperCase(), SERVER_SEED + 'zz', SERVER_SEED.slice(0, 62), '']) {
+    assert.throws(() => fair.commitServerSeed(s), RangeError);
+    assert.throws(() => fair.resultFromSeeds(s, 'c', 0), RangeError);
+  }
+});

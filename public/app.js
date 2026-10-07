@@ -30,8 +30,11 @@ async function api(path, body) {
 
 const toHex = (buf) => [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('');
 
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
+
 function hexToBytes(hex) {
   const clean = hex.trim();
+  if (!/^[0-9a-f]{64}$/.test(clean)) throw new Error('server seed must be 64 lowercase hex characters');
   const out = new Uint8Array(clean.length / 2);
   for (let i = 0; i < out.length; i++) out[i] = parseInt(clean.substr(i * 2, 2), 16);
   return out;
@@ -89,14 +92,14 @@ function render(state) {
 
     $('revealed').innerHTML = p.revealed.length
       ? p.revealed.map((r) =>
-          `<div style="margin-bottom:6px">pair #${p.revealed.indexOf(r) + 1} <span class="mono">${r.serverSeed}</span></div>`,
+          `<div style="margin-bottom:6px">pair #${p.revealed.indexOf(r) + 1} <span class="mono">${esc(r.serverSeed)}</span></div>`,
         ).join('')
       : 'none yet — rotate your seed to reveal one';
   }
 
   $('feed').innerHTML = state.feed.map((b) => `
     <tr>
-      <td>${b.playerName}</td>
+      <td>${esc(b.playerName)}</td>
       <td>${(b.amountSat / SAT_PER_BIT).toLocaleString()}</td>
       <td>${b.target.toFixed(2)}x</td>
       <td class="${b.won ? 'win' : 'loss'}"><b>${b.multiplier.toFixed(2)}x</b></td>
@@ -178,9 +181,10 @@ async function verify() {
   // (1) the math, recomputed locally
   let local;
   try {
+    hexToBytes(serverSeed); // same canonical-seed check the server applies
     local = await computeOutcome(serverSeed, clientSeed, nonce);
   } catch (e) {
-    report.innerHTML = `<div class="check fail">could not parse that server seed (${e.message})</div>`;
+    report.innerHTML = `<div class="check fail">could not parse that server seed (${esc(e.message)})</div>`;
     return;
   }
   const commit = await sha256Hex(hexToBytes(serverSeed));

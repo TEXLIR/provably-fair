@@ -18,6 +18,7 @@
  * balance) is a read-modify-write, so it is wrapped in a short per-player lock.
  */
 
+const crypto = require('crypto');
 const fair = require('./fair');
 
 const SAT_PER_BIT = 100;
@@ -114,12 +115,13 @@ class Casino {
   /** Serialise read-modify-write on one player. Uses SET NX PX as a lock. */
   async withPlayerLock(id, fn) {
     const key = K.lock(id);
+    const token = crypto.randomUUID(); // only release the lock if it is still ours
     for (let attempt = 0; attempt < 40; attempt++) {
-      if (await this.store.setIfAbsent(key, '1', 3000)) {
+      if (await this.store.setIfAbsent(key, token, 3000)) {
         try {
           return await fn();
         } finally {
-          await this.store.del(key);
+          await this.store.delIfEquals(key, token);
         }
       }
       await new Promise((r) => setTimeout(r, 25));

@@ -101,7 +101,7 @@ async function handle(route, req = {}, injectedCasino) {
     }
   } catch (e) {
     const missing = /no such player/.test(e.message);
-    return { status: missing ? 404 : 500, json: { error: e.message } };
+    return { status: missing ? 404 : e instanceof RangeError ? 400 : 500, json: { error: e.message } };
   }
 }
 

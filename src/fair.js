@@ -39,10 +39,23 @@ function generateServerSeed() {
 }
 
 /**
+ * Only canonical seeds: exactly 64 lowercase hex chars. The commitment hashes
+ * the decoded bytes but the HMAC keys on the text, so without this two spellings
+ * of one seed (e.g. upper/lower case, trailing junk) would share a commitment
+ * yet produce different outcomes.
+ */
+function assertServerSeed(serverSeed) {
+  if (typeof serverSeed !== 'string' || !/^[0-9a-f]{64}$/.test(serverSeed)) {
+    throw new RangeError('server seed must be 64 lowercase hex characters');
+  }
+}
+
+/**
  * The public commitment to a server seed.
  * bustadice hashes the *decoded seed bytes*, not the hex text — matched here.
  */
 function commitServerSeed(serverSeed) {
+  assertServerSeed(serverSeed);
   return crypto.createHash('sha256').update(Buffer.from(serverSeed, 'hex')).digest('hex');
 }
 
@@ -51,6 +64,7 @@ function commitServerSeed(serverSeed) {
  * Range: [100, 100000000] = 1.00x .. 1,000,000.00x.
  */
 function resultFromSeeds(serverSeed, clientSeed, nonce) {
+  assertServerSeed(serverSeed);
   const message = `${clientSeed}|${nonce}`;
   const hash = crypto.createHmac('sha256', serverSeed).update(message).digest('hex');
   const X = parseInt(hash.slice(0, 13), 16) / 2 ** 52; // 13 hex chars == 52 bits

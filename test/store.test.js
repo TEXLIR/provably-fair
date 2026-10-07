@@ -47,3 +47,12 @@ test('del removes a key', async () => {
   await s.del('x');
   assert.equal(await s.get('x'), null);
 });
+
+test('delIfEquals only releases a lock still held by the same token', async () => {
+  const s = new MemoryStore();
+  await s.setIfAbsent('lock', 'mine', 1000);
+  await s.delIfEquals('lock', 'theirs');
+  assert.equal(await s.get('lock'), 'mine');
+  await s.delIfEquals('lock', 'mine');
+  assert.equal(await s.get('lock'), null);
+});

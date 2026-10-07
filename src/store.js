@@ -53,12 +53,13 @@ class MemoryStore {
     if (this.strings.has(key)) return false;
     await this.set(key, value);
     if (ttlMs) {
-      setTimeout(() => this.strings.delete(key), ttlMs).unref?.();
+      setTimeout(() => this.delIfEquals(key, String(value)), ttlMs).unref?.();
     }
     return true;
   }
 
   async del(key) { this.strings.delete(key); }
+  async delIfEquals(key, value) { if (this.strings.get(key) === value) this.strings.delete(key); }
 
   /** LPUSH + LTRIM, atomically enough for one process. */
   async pushCapped(key, value, cap) {
@@ -102,6 +103,14 @@ class RedisStore {
   }
 
   async del(key) { await this.redis.del(key); }
+
+  /** Compare-and-delete in one round trip, so we never drop someone else's lock. */
+  async delIfEquals(key, value) {
+    await this.redis.eval(
+      "if redis.call('get', KEYS[1]) == ARGV[1] then return redis.call('del', KEYS[1]) end return 0",
+      [key], [value],
+    );
+  }
 
   async pushCapped(key, value, cap) {
     await this.redis.lpush(key, value);
